@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BonnText | Smart Lecture Notes</title>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- External Libraries -->
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+    
+    <!-- Marked & DOMPurify -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.1/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.9/purify.min.js"></script>
+    
+    <!-- LocalForage -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+
+    <!-- App Modules -->
+    <script type="module" src="js/main.js"></script>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <h1 class="logo">
+                <i class="fa-solid fa-graduation-cap"></i>BonnText
+            </h1>
+        </div>
+
+        <div class="sidebar-content">
+            <div class="form-group">
+                <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+                    Semester
+                    <button class="btn-icon" style="padding: 0; color: var(--primary);" onclick="window.App.showSemesterModal()" title="Add Semester">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </label>
+                <select id="semester-select" class="form-control" onchange="window.App.changeSemester(this.value)">
+                    <!-- Populated by JS -->
+                </select>
+            </div>
+
+            <div class="flex justify-between items-center mt-4 mb-2">
+                <span class="form-label mb-0">Courses</span>
+                <button id="add-course-btn" class="btn-icon" style="padding:0; color:var(--primary);" title="Add Course">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+            
+            <ul id="course-list" class="nav-list">
+                <!-- Courses injected here -->
+            </ul>
+        </div>
+
+        <div class="sidebar-footer">
+            <button id="settings-btn" class="btn btn-outline w-full justify-center" style="color:var(--text-sidebar); border-color:var(--border-sidebar);">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <span>Sync & Settings</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-wrapper">
+        <!-- Overlay for mobile sidebar -->
+        <div id="mobile-overlay" class="modal-overlay" style="z-index: 10;"></div>
+        
+        <!-- Header -->
+        <header class="header no-print">
+            <div style="display: flex; align-items: center; gap: 1rem; flex: 1;">
+                <button class="btn-icon" id="toggle-sidebar-btn" style="display: block;">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div id="breadcrumbs" class="breadcrumbs"></div>
+            </div>
+            <div id="editor-toolbar-container" style="flex: 1; display: flex; justify-content: center;"></div>
+            <div id="global-actions" class="global-actions" style="flex: 1; display: flex; justify-content: flex-end;"></div>
+        </header>
+
+        <!-- Dynamic Content -->
+        <div id="main-content" class="content-area bg-main">
+            <!-- Content Injected Here -->
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <div id="modal-overlay" class="modal-overlay">
+        
+        <!-- Add Course Modal -->
+        <div id="course-modal" class="modal hidden">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Course</h3>
+                <button class="btn-icon close-modal-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body flex-col gap-4">
+                <div class="form-group mb-0">
+                    <label class="form-label">Course Name</label>
+                    <input type="text" id="course-name-input" class="form-control" placeholder="e.g., Advanced Machine Learning">
+                </div>
+                <div class="form-group mb-0">
+                    <label class="form-label">Semester</label>
+                    <input type="text" id="course-semester-input" class="form-control bg-hover" readonly>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline close-modal-btn">Cancel</button>
+                <button id="save-course-btn" class="btn btn-primary">Save Course</button>
+            </div>
+        </div>
+
+        <!-- Add Session Modal -->
+        <div id="session-modal" class="modal hidden">
+            <div class="modal-header">
+                <h3 class="modal-title">Add Session</h3>
+                <button class="btn-icon close-modal-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body flex-col gap-4">
+                <div class="form-group mb-0">
+                    <label class="form-label">Type</label>
+                    <select id="session-type-input" class="form-control">
+                        <option value="lecture">Lecture Hour</option>
+                        <option value="exercise_session">Exercise / Tutorial Session</option>
+                        <option value="exercise">Direct Exercise</option>
+                    </select>
+                </div>
+                <div class="form-group mb-0">
+                    <label class="form-label">Title</label>
+                    <input type="text" id="session-title-input" class="form-control" placeholder="e.g., 01 - Introduction">
+                </div>
+                <div class="form-group mb-0">
+                    <label class="form-label">Date</label>
+                    <input type="date" id="session-date-input" class="form-control">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline close-modal-btn">Cancel</button>
+                <button id="save-session-btn" class="btn btn-primary">Add Session</button>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div id="settings-modal" class="modal hidden" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fa-brands fa-github mr-2"></i>GitHub Sync & Settings</h3>
+                <button class="btn-icon close-modal-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body flex-col gap-4">
+                <div style="background-color: #eff6ff; color: #1e3a8a; padding: 0.75rem; border-radius: var(--radius-md); font-size: 0.875rem; border: 1px solid #bfdbfe;">
+                    <i class="fa-solid fa-circle-info mr-1"></i> To prevent hitting GitHub API limits, only text notes and course structures are synced. Large PDF files remain securely in your browser's offline storage.
+                </div>
+                
+                <div class="form-group mb-0">
+                    <label class="form-label">GitHub Personal Access Token (PAT)</label>
+                    <input type="password" id="github-token" class="form-control" style="font-family: monospace;" placeholder="ghp_...">
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Needs 'gist' permission.</p>
+                </div>
+                <div class="form-group mb-0">
+                    <label class="form-label">Gist ID (Leave empty to create new)</label>
+                    <input type="text" id="github-gist-id" class="form-control" style="font-family: monospace;" placeholder="e.g., 8a1b2c3d...">
+                </div>
+                
+                <div class="flex gap-2">
+                    <button id="sync-push-btn" class="btn btn-primary flex-1" style="background-color: #1e293b;"><i class="fa-solid fa-cloud-arrow-up"></i> Push</button>
+                    <button id="sync-pull-btn" class="btn btn-outline flex-1"><i class="fa-solid fa-cloud-arrow-down"></i> Pull</button>
+                </div>
+
+                <hr style="border: none; border-top: 1px solid var(--border-color); margin: 0.5rem 0;">
+
+                <h4 style="font-size: 0.875rem; font-weight: 600; color: var(--text-main);">Local Data Management</h4>
+                <div class="flex gap-2">
+                    <button id="export-btn" class="btn btn-primary flex-1" style="background-color: var(--success);"><i class="fa-solid fa-download"></i> Backup</button>
+                    <label class="btn btn-outline flex-1 justify-center" style="margin: 0; cursor: pointer;">
+                        <i class="fa-solid fa-upload"></i> Restore
+                        <input type="file" id="import-input" class="hidden" accept=".json">
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Semester Modal -->
+        <div id="semester-modal" class="modal hidden">
+            <div class="modal-header">
+                <h3 class="modal-title">Add Semester</h3>
+                <button class="btn-icon close-modal-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body flex-col gap-4">
+                <div class="form-group mb-0">
+                    <label class="form-label">Term</label>
+                    <select id="semester-term-input" class="form-control">
+                        <option value="SS">Summer Semester (SS)</option>
+                        <option value="WS">Winter Semester (WS)</option>
+                    </select>
+                </div>
+                <div class="form-group mb-0">
+                    <label class="form-label">Year (e.g. 25 or 24/25)</label>
+                    <input type="text" id="semester-year-input" class="form-control" placeholder="e.g. 25">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline close-modal-btn">Cancel</button>
+                <button class="btn btn-primary" onclick="window.App.addSemester()">Add</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Zoom Modal -->
+    <div id="zoom-modal"></div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+</body>
+</html>
